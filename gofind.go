@@ -7,10 +7,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/urfave/cli/v2"
 )
 
-// TODO: Add proper logging
-const verbose = false
+const verbose = true
 
 func isDirectory(path string) bool {
 	fileInfo, err := os.Stat(path)
@@ -20,31 +21,7 @@ func isDirectory(path string) bool {
 	return fileInfo.IsDir()
 }
 
-func main() {
-
-	// TODO: Use CLI package
-	var numArgs = len(os.Args)
-	if numArgs == 1 {
-		fmt.Println("Must provide pattern argument")
-		return
-	}
-
-	pattern := os.Args[1]
-	var rootDirectory string
-
-	var err error
-	switch numArgs {
-	case 2:
-		rootDirectory, err = os.Getwd()
-		if err != nil {
-			log.Fatal("Failed to get current directory")
-			return
-		}
-
-	case 3:
-		rootDirectory = os.Args[2]
-	}
-
+func gofind(pattern string, rootDirectory string) {
 	if !isDirectory(rootDirectory) {
 		fmt.Printf("'%v' is not a directory\n", rootDirectory)
 		return
@@ -85,5 +62,38 @@ func main() {
 
 	for _, match := range matches {
 		fmt.Println(match)
+	}
+}
+
+func main() {
+
+	app := &cli.App{
+		Name:  "gofind",
+		Usage: "Find files against a search pattern",
+		Action: func(cCtx *cli.Context) error {
+
+			if cCtx.NArg() == 0 {
+				fmt.Println("Must provide pattern argument")
+				return nil
+			}
+
+			pattern := cCtx.Args().First()
+			rootDirectory := cCtx.Args().Get(2)
+			var err error
+			if len(rootDirectory) == 0 {
+				rootDirectory, err = os.Getwd()
+				if err != nil {
+					log.Fatal("Failed to get current directory")
+					return err
+				}
+			}
+
+			gofind(pattern, rootDirectory)
+			return nil
+		},
+	}
+
+	if err := app.Run(os.Args); err != nil {
+		log.Fatal(err)
 	}
 }
