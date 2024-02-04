@@ -11,8 +11,6 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-const verbose = true
-
 func isDirectory(path string) bool {
 	fileInfo, err := os.Stat(path)
 	if err != nil {
@@ -21,7 +19,7 @@ func isDirectory(path string) bool {
 	return fileInfo.IsDir()
 }
 
-func gofind(pattern string, rootDirectory string) {
+func gofind(pattern string, rootDirectory string, verbose bool) {
 	if !isDirectory(rootDirectory) {
 		fmt.Printf("'%v' is not a directory\n", rootDirectory)
 		return
@@ -67,9 +65,18 @@ func gofind(pattern string, rootDirectory string) {
 
 func main() {
 
+	var verbose bool
 	app := &cli.App{
 		Name:  "gofind",
 		Usage: "Find files against a search pattern",
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:        "verbose",
+				Usage:       "Print extra information while running",
+				Aliases:     []string{"v"},
+				Destination: &verbose,
+			},
+		},
 		Action: func(cCtx *cli.Context) error {
 
 			if cCtx.NArg() == 0 {
@@ -88,7 +95,7 @@ func main() {
 				}
 			}
 
-			gofind(pattern, rootDirectory)
+			gofind(pattern, rootDirectory, verbose)
 			return nil
 		},
 	}
