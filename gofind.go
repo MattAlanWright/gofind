@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// TODO: Add proper logging
 const verbose = false
 
 func isDirectory(path string) bool {
@@ -34,7 +35,6 @@ func main() {
 	var err error
 	switch numArgs {
 	case 2:
-		// TODO: Error handling here
 		rootDirectory, err = os.Getwd()
 		if err != nil {
 			log.Fatal("Failed to get current directory")
@@ -50,9 +50,11 @@ func main() {
 		return
 	}
 
-	// TODO: Add 'verbose' mode for stuff like this
-	fmt.Printf("Looking for '%v' in '%v'\n", pattern, rootDirectory)
+	if verbose {
+		fmt.Printf("Looking for '%v' in '%v'\n", pattern, rootDirectory)
+	}
 
+	matches := make([]string, 0, 20)
 	filepath.Walk(rootDirectory, func(path string, info fs.FileInfo, err error) error {
 		if err == fs.SkipDir {
 			if verbose {
@@ -63,7 +65,7 @@ func main() {
 
 		if err == fs.SkipAll {
 			if verbose {
-				fmt.Printf("Skipping ALL at path %v\n", path)
+				fmt.Printf("Skipping all at path %v\n", path)
 			}
 			return err
 		}
@@ -76,8 +78,12 @@ func main() {
 		}
 
 		if !info.IsDir() && strings.Contains(path, pattern) {
-			fmt.Println(path)
+			matches = append(matches, path)
 		}
 		return nil
 	})
+
+	for _, match := range matches {
+		fmt.Println(match)
+	}
 }
