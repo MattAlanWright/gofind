@@ -67,8 +67,9 @@ func main() {
 
 	var verbose bool
 	app := &cli.App{
-		Name:  "gofind",
-		Usage: "Find files against a search pattern",
+		Name:      "gofind",
+		Usage:     "Search for files against a pattern",
+		UsageText: "gofind <pattern> [directory]",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:        "verbose",
@@ -80,8 +81,8 @@ func main() {
 		Action: func(cCtx *cli.Context) error {
 
 			if cCtx.NArg() == 0 {
-				fmt.Println("Must provide pattern argument")
-				return nil
+				cli.ShowAppHelp(cCtx)
+				os.Exit(1)
 			}
 
 			pattern := cCtx.Args().First()
