@@ -82,7 +82,7 @@ func main() {
 	var verbose bool
 	app := &cli.App{
 		Name:      "gofind",
-		Usage:     "Search for files against a pattern",
+		Usage:     "Search for files containing a pattern",
 		UsageText: "gofind <pattern> [directory]",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
