@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,39 +19,15 @@ func isDirectory(path string) bool {
 	return fileInfo.IsDir()
 }
 
-func gofind(pattern string, rootDirectory string, verbose bool) {
-	if !isDirectory(rootDirectory) {
-		fmt.Printf("'%v' is not a directory\n", rootDirectory)
-		return
-	}
-
-	if verbose {
-		fmt.Printf("Looking for '%v' in '%v'\n", pattern, rootDirectory)
-	}
-
+func gofind(pattern string, rootDirectory string) {
 	matches := make([]string, 0, 20)
 	filepath.Walk(rootDirectory, func(path string, info fs.FileInfo, err error) error {
-		if err == fs.SkipDir {
-			if verbose {
-				fmt.Printf("Skipping directory %v\n", path)
-			}
+		if err == fs.SkipDir || err == fs.SkipAll {
 			return err
 		}
-
-		if err == fs.SkipAll {
-			if verbose {
-				fmt.Printf("Skipping all at path %v\n", path)
-			}
-			return err
-		}
-
 		if err != nil {
-			if verbose {
-				fmt.Printf("Error in WalkFunc - %v\n", err)
-			}
 			return nil
 		}
-
 		if !info.IsDir() && strings.Contains(path, pattern) {
 			matches = append(matches, path)
 		}
@@ -67,33 +42,21 @@ func gofind(pattern string, rootDirectory string, verbose bool) {
 func getRootDirFromArg(directoryArg string) (string, error) {
 	rootDirectory, err := filepath.Abs(directoryArg)
 	if err != nil {
-		log.Fatalf("Failed to get absolute path of %v\n", directoryArg)
 		return "", err
 	}
 	if !isDirectory(rootDirectory) {
-		log.Fatalf("No such directory %v\n", rootDirectory)
-		return "", errors.New("Invalid directory")
+		errString := fmt.Sprintf("No such directory %v\n", rootDirectory)
+		return "", errors.New(errString)
 	}
 	return rootDirectory, nil
 }
 
 func main() {
-
-	var verbose bool
 	app := &cli.App{
 		Name:      "gofind",
 		Usage:     "Search for files containing a pattern",
 		UsageText: "gofind <pattern> [directory]",
-		Flags: []cli.Flag{
-			&cli.BoolFlag{
-				Name:        "verbose",
-				Usage:       "Print extra information while running",
-				Aliases:     []string{"v"},
-				Destination: &verbose,
-			},
-		},
 		Action: func(cCtx *cli.Context) error {
-
 			if cCtx.NArg() == 0 {
 				cli.ShowAppHelp(cCtx)
 				os.Exit(1)
@@ -106,12 +69,12 @@ func main() {
 				return err
 			}
 
-			gofind(pattern, rootDirectory, verbose)
+			gofind(pattern, rootDirectory)
 			return nil
 		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 }
