@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"log"
@@ -63,6 +64,19 @@ func gofind(pattern string, rootDirectory string, verbose bool) {
 	}
 }
 
+func getRootDirFromArg(directoryArg string) (string, error) {
+	rootDirectory, err := filepath.Abs(directoryArg)
+	if err != nil {
+		log.Fatalf("Failed to get absolute path of %v\n", directoryArg)
+		return "", err
+	}
+	if !isDirectory(rootDirectory) {
+		log.Fatalf("No such directory %v\n", rootDirectory)
+		return "", errors.New("Invalid directory")
+	}
+	return rootDirectory, nil
+}
+
 func main() {
 
 	var verbose bool
@@ -85,15 +99,11 @@ func main() {
 				os.Exit(1)
 			}
 
-			pattern := cCtx.Args().First()
-			rootDirectory := cCtx.Args().Get(2)
 			var err error
-			if len(rootDirectory) == 0 {
-				rootDirectory, err = os.Getwd()
-				if err != nil {
-					log.Fatal("Failed to get current directory")
-					return err
-				}
+			pattern := cCtx.Args().First()
+			rootDirectory, err := getRootDirFromArg(cCtx.Args().Get(1))
+			if err != nil {
+				return err
 			}
 
 			gofind(pattern, rootDirectory, verbose)
